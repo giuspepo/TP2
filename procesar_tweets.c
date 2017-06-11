@@ -38,6 +38,23 @@ size_t hashing3(const char* clave, size_t tam){
 	}		
 	return hash % tam;		
 }
+heap_t* obtener_tts(hash_t* hash, bloom_filter_t* filtro, size_t tope, int (*cmp) (void*, void*)) {
+	heap_t* heap = heap_crear(cmp,NULL);
+	if (heap == NULL) return NULL;
+	
+	hash_iter_t * iterador = hash_iter_crear(hash);
+	if (iterador == NULL) {
+		heap_destruir(heap);
+		return NULL;
+	}
+	
+	while (!hash_iter_al_final(iterador)) {
+		//estructura que guarda el tag y la cantidad de veces
+		//que aparecio, devuelta por el filtro.
+		//Guardar la estructura al heap
+		//If (heap_cantidad > k) desencolar.
+	}
+}
 
 //Procesar_tweets es su propio programa. Su función es main.
 int main(int argc, char* argv[]) {	
@@ -73,7 +90,7 @@ int main(int argc, char* argv[]) {
 		free_strv(arreglo);	
 		i++;	
 		if (i == n) {	
-			heap_t trends = obtener_tts(tags, filtro1, filtro2, filtro3, k, comparador_minimos);
+			heap_t* trends = obtener_tts(tags, filtro1, filtro2, filtro3, k, comparador_minimos);
 			// imprimir
 			// vaciar las tablas y el heap
 			i = 0;
