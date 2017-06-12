@@ -52,7 +52,7 @@ bloom_filter_t* bloom_filter_crear(hash_func_t funcion1, hash_func_t funcion2, h
 		free(filtro);
 		return NULL;
 	}
-	filtro->tam = MAXIMO;
+
 	filtro->funcion_hash1 = funcion1;
 	filtro->funcion_hash2 = funcion2;
 	filtro->funcion_hash3 = funcion3;
@@ -62,12 +62,12 @@ bloom_filter_t* bloom_filter_crear(hash_func_t funcion1, hash_func_t funcion2, h
 
 bool bloom_filter_cargar(bloom_filter_t* filtro, const char* clave) {
 	if (filtro == NULL || clave == NULL) return false;
+	size_t pos1 = filtro->funcion_hash2(clave, TAM_VECTOR);
+	filtro->arreglo1[pos1]++;
 	size_t pos2 = filtro->funcion_hash2(clave, TAM_VECTOR);
-	filtro->areglo[pos1]++;
-	size_t pos2 = filtro->funcion_hash2(clave, TAM_VECTOR);
-	filtro->arreglo[pos2]++;
+	filtro->arreglo2[pos2]++;
 	size_t pos3 = filtro->funcion_hash3(clave, TAM_VECTOR);
-	filtro->arreglo[pos3]++;
+	filtro->arreglo3[pos3]++;
 	return true;
 }
 
@@ -80,6 +80,14 @@ size_t bloom_filter_obtener(bloom_filter_t* filtro, const char* clave) {
 	size_t pos3 = filtro->funcion_hash1(clave, TAM_VECTOR);
 	size_t cant3 = filtro->arreglo1[pos3];
 	return minimo(cant1, cant2, cant3);
+}
+
+void bloom_filter_vaciar(bloom_filter_t* filtro) {
+	for (size_t i = 0; i < TAM_VECTOR; i++) {
+		filtro->arreglo1[i] = 0;
+		filtro->arreglo2[i] = 0;
+		filtro->arreglo3[i] = 0;
+	}
 }
 
 void bloom_filter_destruir(bloom_filter_t* filtro) {
