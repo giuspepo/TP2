@@ -4,6 +4,7 @@
  *  Created on: 5 de jun. de 2017
  *      Author: algoritmos2
  */
+#define _POSIX_C_SOURCE 200809L
 #include "bloom_filter.h"
 #include "hash.h"
 #include "strutil.h"
@@ -47,7 +48,7 @@ typedef struct tt_nodo {
 	size_t cant;
 }tt_nodo_t;
 
-int comparador_minimos(void* a, void* b) {
+int comparador_minimos(const void* a, const void* b) {
 	tt_nodo_t* tag_a = (tt_nodo_t*) a;
 	tt_nodo_t* tag_b = (tt_nodo_t*) b;
 
@@ -60,7 +61,7 @@ heap_t* obtener_tts(hash_t* hash, bloom_filter_t* filtro, size_t tope) {
 	
 	hash_iter_t * iterador = hash_iter_crear(hash);
 	if (iterador == NULL) {
-		heap_destruir(heap);
+		heap_destruir(heap,free);
 		return NULL;
 	}
 	
@@ -87,7 +88,7 @@ heap_t* obtener_tts(hash_t* hash, bloom_filter_t* filtro, size_t tope) {
 
 void imprimir_tts(heap_t* heap){
 
-	size_t tope = heap->cant;
+	size_t tope = heap_cantidad(heap);
 	printf("** %d TTS HISTORICOS  **\n", tope);
 	//Este arreglo guarda el total de elementos en el heap, que se asume que es k
 	//El heap guarda los elementos con el minimo al frente, para facilitar retirarlo.
@@ -108,7 +109,9 @@ void imprimir_tts(heap_t* heap){
 	for (int j = 0; j < tope; j++) {
 		tt_nodo_t* nodo = arreglo[tope-j-1];
 		printf("TT: %s, Cant: %d\n", nodo->tag, nodo->cant);
+		free(nodo);
 	}
+	free(arreglo);
 	heap_destruir(heap, free);
 }
 
@@ -124,8 +127,8 @@ int cargar_tts(int k, int n){
 		return EXIT_FAILED;
 	}
 
- 	char buffer = NULL;
-	int tam = 0;
+ 	char* buffer = NULL;
+	size_t tam = 0;
  	int i = 0; //Cuenta los parrafos hasta llegar a n.
 	while (getline(&buffer,&tam,stdin) != -1) {
  		char** arreglo = split(buffer, ',');

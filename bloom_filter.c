@@ -6,7 +6,7 @@
  */
 #include "bloom_filter.h"
 #include <stdlib.h>
-#define TAM_VECTOR 4115226 //Un numero arbitrario. Lo podemos cambiar luego.
+#define TAM_VECTOR 1000 //Un numero arbitrario. Lo podemos cambiar luego.
 
 struct bloom_filter {
 	size_t* arreglo1; 
@@ -62,7 +62,7 @@ bloom_filter_t* bloom_filter_crear(hash_func_t funcion1, hash_func_t funcion2, h
 
 bool bloom_filter_cargar(bloom_filter_t* filtro, const char* clave) {
 	if (filtro == NULL || clave == NULL) return false;
-	size_t pos1 = filtro->funcion_hash2(clave, TAM_VECTOR);
+	size_t pos1 = filtro->funcion_hash1(clave, TAM_VECTOR);
 	filtro->arreglo1[pos1]++;
 	size_t pos2 = filtro->funcion_hash2(clave, TAM_VECTOR);
 	filtro->arreglo2[pos2]++;
@@ -75,10 +75,10 @@ size_t bloom_filter_obtener(bloom_filter_t* filtro, const char* clave) {
 	if (filtro == NULL || clave == NULL) return 0;
 	size_t pos1 = filtro->funcion_hash1(clave, TAM_VECTOR);
 	size_t cant1 = filtro->arreglo1[pos1];
-	size_t pos2 = filtro->funcion_hash1(clave, TAM_VECTOR);
+	size_t pos2 = filtro->funcion_hash2(clave, TAM_VECTOR);
 	size_t cant2 = filtro->arreglo2[pos2];
-	size_t pos3 = filtro->funcion_hash1(clave, TAM_VECTOR);
-	size_t cant3 = filtro->arreglo1[pos3];
+	size_t pos3 = filtro->funcion_hash3(clave, TAM_VECTOR);
+	size_t cant3 = filtro->arreglo3[pos3];
 	return minimo(cant1, cant2, cant3);
 }
 
