@@ -4,48 +4,74 @@
  *  Created on: 5 de jun. de 2017
  *      Author: algoritmos2
  */
+#define _POSIX_C_SOURCE 200809L
+#include "bloom_filter.h"
+#include "hash.h"
+#include "lib.h"
+#include "strutil.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "bloom_filter.h"			
-#include "hash.h"			
-#include "strutil.h"			
-#include <stdio.h>			
-#include <stdlib.h>			
-#include <string.h>			
-			
-int main(int argc, char* argv[]) {			
-	if (argc < 2) return 1;		
-			
-	FILE* archivo = fopen(argv[1], "r");		
-	if (archivo == NULL) return -1;		
-			
-	//Creamos los TDAs		
-	hash_t* usuarios = hash_crear(NULL);		
-	//if usuarios error		
-	bloom_filter_t* filtro1 = bloom_filter_crear(hashing1);		
-	bloom_filter_t* filtro2 = bloom_filter_crear(hashing2);		
-	bloom_filter_t* filtro3 = bloom_filter_crear(hashing3);		
-	//If filtros error		
-			
-	char buffer = NULL;		
-	int tam = 0;		
+#define EXIT_FAILED -1
+#define EXIT_SUCCESS 0
+
+int cargar_usuarios(const char* filename) {
+	//Creamos los TDAs
+	FILE* archivo = fopen(filename, "r");		
+	if (archivo == NULL) return EXIT_FAILED;
+
+	hash_t* hash = hash_crear(NULL);
+	if (!hash) {
+		fclose(archivo);
+		return EXIT_FAILED;
+	}
+	//Estos son los bloom filters en los que se almacenarán las cuentas de tags.
+	bloom_filter_t* filtro = bloom_filter_crear(hashing1,hashing2,hashing3);
+	if (!filtro){
+		hash_destruir(hash);
+		return EXIT_FAILED;
+	}
+	
+	char* buffer = NULL;		
+	size_t tam = 0;		
 			
 	while (getline(&buffer,&tam,archivo) != -1) {		
 		char** arreglo = split(buffer, ',');	
-		//if error	
-		if (!hash_pertenece(usuarios, arreglo[0])) hash_guardar(usuarios, arreglo[0], NULL);	
+		if (!arreglo){
+ 			free(buffer);
+ 			hash_destruir(hash);
+ 			bloom_filter_destruir(filtro);
+ 			fclose(archivo);
+ 			return EXIT_FAILED;
+ 		}
+		if (!hash_pertenece(hash, arreglo[0])) hash_guardar(hash, arreglo[0], NULL);	
 		int j = 1; //se encarga de leer los tags.	
 		while (arreglo[j] != NULL) {	
-			bloom_filter_cargar(filtro1, arreglo[0]);
-			bloom_filter_cargar(filtro2, arreglo[0]);
-			bloom_filter_cargar(filtro3, arreglo[0]);
-		}	
+			bloom_filter_cargar(filtro, arreglo[0]);
+			j++;
+		}
 		free_strv(arreglo);	
-	}		
-			
-	//Imprimir los elementos en los arreglos.		
-			
+	}
+	heap_t* heap = obtener_tts(hash, filtro, hash_cantidad(hash));		
+	//Si el heap no se crea imprimir usuarios no hace nada.
+	imprimir_usuarios(heap);
+	
+	hash_destruir(hash);
+	bloom_filter_destruir(filtro);
 	free(buffer);		
-	fclose(archivo);		
+	fclose(archivo);
+	return EXIT_SUCCESS;
+}
+
+
+int main(int argc, char* argv[]) {			
+	if (argc < 2) return EXIT_FAILED;		
+		
+	int exit = cargar_usuarios(argv[1]);
+	if (exit == EXIT_FAILED) {
+		printf("ALGO SALIO MAL");
+	}	
 			
-	return 0;		
+	return exit;		
 }			
